@@ -1,0 +1,140 @@
+/* ============================================================
+   ML/DL VISUAL LAB — design tokens
+   Aesthetic: technical blueprint / circuit schematic.
+   Forward signal = amber. Backward gradient = coral.
+   ============================================================ */
+
+:root {
+  /* --- color: blueprint base --- */
+  --ink-deep: #0e1b2b;      /* page background, deep blueprint navy */
+  --ink-panel: #14202f;
+  --grid-line: #1e3450;     /* faint schematic grid */
+  --grid-line-strong: #2c4d70;
+  --paper: #f5f2e8;         /* aged paper panels */
+  --paper-dim: #e9e4d4;
+  --text-on-dark: #e8ecef;
+  --text-on-dark-dim: #90a0b3;
+  --text-on-paper: #1b2430;
+  --text-on-paper-dim: #5b6572;
+
+  /* --- color: signal accents --- */
+  --signal-forward: #ffb238;   /* amber — forward pass */
+  --signal-forward-dim: #8a5f1f;
+  --signal-back: #ff6b5b;      /* coral — backward pass / gradients */
+  --signal-back-dim: #7a362d;
+  --signal-good: #59c9a5;      /* convergence / success */
+  --signal-neutral: #6d84a2;
+
+  /* --- type --- */
+  --font-display: "Space Grotesk", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", monospace;
+
+  /* --- layout --- */
+  --header-h: 60px;
+  --footer-h: 88px;
+  --panel-w: 300px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --line: 1px solid var(--grid-line-strong);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ink-deep);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--text-on-dark);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+button, select, input {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--signal-forward);
+  color: var(--ink-deep);
+}
+
+/* --- app shell --- */
+
+#app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: var(--header-h) 1fr var(--footer-h);
+  grid-template-columns: 1fr;
+}
+
+#stage-row {
+  display: grid;
+  grid-template-columns: 1fr var(--panel-w);
+  min-height: 0;
+}
+
+#stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#stage svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#panel {
+  border-left: var(--line);
+  background: var(--paper);
+  color: var(--text-on-paper);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (max-width: 820px) {
+  #stage-row {
+    grid-template-columns: 1fr;
+  }
+  #panel {
+    position: fixed;
+    right: 0;
+    top: var(--header-h);
+    bottom: var(--footer-h);
+    width: min(86vw, 340px);
+    transform: translateX(100%);
+    transition: transform 220ms ease;
+    z-index: 20;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.35);
+  }
+  #panel.open {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* visible keyboard focus, everywhere */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--signal-forward);
+  outline-offset: 2px;
+}

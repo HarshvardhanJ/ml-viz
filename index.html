@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ML/DL Visual Lab — watch the numbers move</title>
+<meta name="description" content="Interactive, in-browser visualizations of how numbers travel through machine learning and deep learning algorithms." />
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <header id="header">
+    <div class="brand">
+      <span class="mark">[ML/DL]</span>
+      <h1>Visual Lab</h1>
+    </div>
+
+    <div class="algo-select-wrap">
+      <label for="algo-select">Algorithm</label>
+      <select id="algo-select" aria-label="Select algorithm to visualize"></select>
+    </div>
+
+    <button id="panel-toggle" aria-expanded="false" aria-controls="panel">Inspector</button>
+  </header>
+
+  <div id="stage-row">
+    <main id="stage" aria-live="polite"></main>
+    <aside id="panel" aria-label="Inspector panel">
+      <div class="panel-empty">
+        <strong>Inspector</strong>
+        Click a node, point, or centroid on the stage to see and edit its properties here.
+      </div>
+    </aside>
+  </div>
+
+  <footer id="footer">
+    <div class="controls-cluster" id="controls-cluster"></div>
+    <div class="status-cluster" id="status-cluster"></div>
+  </footer>
+
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
