@@ -2,6 +2,7 @@ import { svgEl, createStageSVG, backgroundGrid } from "../core/svg.js";
 import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addButton, addHint } from "../core/panel.js";
 import { fmt, randRange, randn, clamp } from "../core/math.js";
+import { drawLossChart, pushHistory } from "../core/chart.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 90, right: 830, top: 60, bottom: 470 };
@@ -36,6 +37,7 @@ function freshState(mode = "linear") {
     w: 0, b: 0, lr: mode === "linear" ? 0.03 : 0.15,
     epoch: 0,
     lastLoss: null, lastDw: null, lastDb: null,
+    lossHistory: [],
     busy: false,
   };
 }
@@ -95,6 +97,7 @@ export default {
       state.w -= state.lr * dw;
       state.b -= state.lr * db;
       state.lastDw = dw; state.lastDb = db; state.lastLoss = loss;
+      pushHistory(state.lossHistory, loss, 80);
       state.epoch += 1;
       state.busy = false;
       renderAll();
@@ -244,6 +247,13 @@ export default {
       const t = svgEl("text", { class: "node-label", x: plateX + 75, y: plateY - 2, style: "font-size:11px" });
       t.textContent = `w=${fmt(state.w, 2)}  b=${fmt(state.b, 2)}`;
       svg.appendChild(t);
+
+      // loss-over-time chart, bottom-right — below the plot, clear of the data
+      drawLossChart(svg, {
+        x: PLOT.right - 220, y: PLOT.bottom + 8, w: 220, h: 78,
+        history: state.lossHistory, color: "#ffb238",
+        title: state.mode === "linear" ? "MSE over steps" : "Cross-entropy over steps",
+      });
     }
 
     function renderStatusBar() {

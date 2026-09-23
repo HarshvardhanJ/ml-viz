@@ -2,6 +2,7 @@ import { svgEl, createStageSVG, backgroundGrid, pulseAlongLine } from "../core/s
 import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addButton, addHint } from "../core/panel.js";
 import { activations, fmt, randRange } from "../core/math.js";
+import { drawLossChart, pushHistory } from "../core/chart.js";
 
 const VIEWBOX = "0 0 900 560";
 const LAYOUT = {
@@ -36,6 +37,7 @@ function freshState() {
     phase: "idle", // idle -> forward -> forward-done -> backward -> backward-done -> (apply) -> idle
     forwardQueue: [],
     backwardQueue: [],
+    lossHistory: [],
     busy: false,
   };
 }
@@ -96,6 +98,7 @@ export default {
           x1: dest.x, y1: dest.y, x2: LAYOUT.loss.x, y2: LAYOUT.loss.y,
           value: a, color: "#ffb238",
         });
+        pushHistory(state.lossHistory, 0.5 * (state.target - a) ** 2, 60);
       }
     }
 
@@ -356,6 +359,9 @@ export default {
       drawNode("output", 0, "out", state.output.a === null ? "—" : fmt(state.output.a, 2), activations[state.output.activation].label);
       // loss node
       drawLossNode();
+
+      // loss-over-time chart, top-right corner — clear of all edges/nodes
+      drawLossChart(svg, { x: 655, y: 12, w: 225, h: 100, history: state.lossHistory, color: "#ffb238", title: "Loss over steps" });
 
       function drawNode(type, idx, label, valueText, subText) {
         const { x, y } = coordOf(type, idx);

@@ -2,6 +2,7 @@ import { svgEl, createStageSVG, backgroundGrid } from "../core/svg.js";
 import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { fmt, randRange, randn } from "../core/math.js";
+import { drawLossChart, pushHistory } from "../core/chart.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 220, right: 680, top: 50, bottom: 510 };
@@ -38,8 +39,16 @@ function freshState(k = 3, points = null) {
     iteration: 0,
     phase: "assign", // 'assign' | 'update'
     converged: false,
+    inertiaHistory: [],
     busy: false,
   };
+}
+
+function computeInertia(state) {
+  return state.points.reduce((sum, p) => {
+    if (p.cluster === null) return sum;
+    return sum + dist2(p, state.centroids[p.cluster]);
+  }, 0);
 }
 
 export default {
@@ -88,6 +97,7 @@ export default {
         const changed = state.points.some((p, i) => p.cluster !== prev[i]);
         if (state.iteration > 0 && !changed) state.converged = true;
         state.phase = "update";
+        pushHistory(state.inertiaHistory, computeInertia(state), 80);
         renderAll();
       } else {
         const fresh = computeNewCentroids();
@@ -96,6 +106,7 @@ export default {
         state.centroids = fresh;
         state.iteration += 1;
         state.phase = "assign";
+        pushHistory(state.inertiaHistory, computeInertia(state), 80);
         renderAll();
       }
       state.busy = false;
@@ -224,6 +235,13 @@ export default {
       const t = svgEl("text", { class: "node-label", x: 95, y: 62, style: "font-size:11px" });
       t.textContent = `k = ${state.k}`;
       svg.appendChild(t);
+
+      // inertia-over-time chart, right margin — fully clear of the plot area
+      drawLossChart(svg, {
+        x: 700, y: 200, w: 180, h: 100,
+        history: state.inertiaHistory, color: "#59c9a5",
+        title: "Inertia (WCSS)",
+      });
     }
 
     function diamond(x, y, color, size, opacity = 1, selected = false) {
