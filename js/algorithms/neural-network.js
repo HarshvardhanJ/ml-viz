@@ -311,13 +311,21 @@ export default {
       svg = createStageSVG(stageEl, VIEWBOX);
       svg.appendChild(backgroundGrid(svg, 0, 0, 900, 560));
 
+      // Weight labels sit near the source end (t=0.3) rather than the exact
+      // midpoint: two edges that cross (e.g. x0->h1 and x1->h0) meet right at
+      // their midpoints, so a 50% label placement makes both labels collide.
+      // Near the source, edges from the same node are still separated by
+      // their distinct destinations, so labels land in different spots.
+      const LABEL_T = 0.3;
+
       // edges: input -> hidden
       state.hidden.forEach((h, hIdx) => {
         h.weights.forEach((wt, i) => {
           const from = LAYOUT.input[i], to = LAYOUT.hidden[hIdx];
-          const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
+          const lx = from.x + (to.x - from.x) * LABEL_T;
+          const ly = from.y + (to.y - from.y) * LABEL_T;
           svg.appendChild(svgEl("line", { class: "edge-line", x1: from.x, y1: from.y, x2: to.x, y2: to.y }));
-          const lbl = svgEl("text", { class: "edge-weight-label", x: mx, y: my - 6 });
+          const lbl = svgEl("text", { class: "edge-weight-label", x: lx, y: ly - 6 });
           lbl.textContent = fmt(wt, 2);
           svg.appendChild(lbl);
         });
@@ -326,9 +334,10 @@ export default {
       // edges: hidden -> output
       state.output.weights.forEach((wt, i) => {
         const from = LAYOUT.hidden[i], to = LAYOUT.output[0];
-        const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
+        const lx = from.x + (to.x - from.x) * LABEL_T;
+        const ly = from.y + (to.y - from.y) * LABEL_T;
         svg.appendChild(svgEl("line", { class: "edge-line", x1: from.x, y1: from.y, x2: to.x, y2: to.y }));
-        const lbl = svgEl("text", { class: "edge-weight-label", x: mx, y: my - 6 });
+        const lbl = svgEl("text", { class: "edge-weight-label", x: lx, y: ly - 6 });
         lbl.textContent = fmt(wt, 2);
         svg.appendChild(lbl);
       });

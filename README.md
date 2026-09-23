@@ -17,8 +17,8 @@ straightforward fit for GitHub Pages.
 | Neural Network (2-2-1) | ✅ built | Edit each neuron's weights, bias, and activation function. Step through the forward pass neuron-by-neuron, then step through backprop, then apply the gradient update. |
 | Linear / Logistic Regression | ✅ built | Drag data points, edit `w`/`b`/learning rate, and step through gradient descent one update at a time. Toggle between linear and logistic mode. |
 | K-Means Clustering | ✅ built | Edit point and centroid positions, choose k, and step through the assign / update phases until convergence. |
-| K-Nearest Neighbors | 🚧 scaffolded, not built | Registered in the dropdown with a "coming soon" screen — see `js/algorithms/knn.js` via `stub.js`. |
-| Decision Tree | 🚧 scaffolded, not built | Same as above, `js/algorithms/decision-tree.js`. |
+| K-Nearest Neighbors | ✅ built | Click the plot to drop a query point, choose k, and step through revealing its nearest neighbors closest-first until the vote decides its class. |
+| Decision Tree | 🚧 scaffolded, not built | Registered in the dropdown with a "coming soon" screen — see `js/algorithms/decision-tree.js` via `stub.js`. |
 | Convolution (CNN) | 🚧 scaffolded, not built | Same as above, `js/algorithms/cnn.js`. |
 
 The three "coming soon" entries are intentionally left as stubs so the

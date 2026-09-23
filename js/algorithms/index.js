@@ -1,14 +1,8 @@
 import neuralNetwork from "./neural-network.js";
 import linearRegression from "./linear-regression.js";
 import kmeans from "./kmeans.js";
+import knn from "./knn.js";
 import { makeStub } from "./stub.js";
-
-const knn = makeStub({
-  id: "knn",
-  name: "K-Nearest Neighbors",
-  blurb: "Classify a new point by looking at its k closest labeled neighbors.",
-  plan: "Planned interaction: drop a query point anywhere on the plane, drag a k slider, and watch the k-nearest training points light up along with the connecting lines and the resulting vote.",
-});
 
 const decisionTree = makeStub({
   id: "decision-tree",
