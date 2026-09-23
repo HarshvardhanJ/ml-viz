@@ -68,6 +68,22 @@
   font-size: 13px;
 }
 
+#theme-toggle {
+  flex-shrink: 0;
+  background: var(--ink-deep);
+  border: var(--line);
+  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#theme-toggle:hover { border-color: var(--signal-forward); }
+
 @media (max-width: 820px) {
   #panel-toggle { display: inline-block; }
   #header .brand h1 { display: none; }

@@ -3,6 +3,7 @@ import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { fmt, randRange, randn } from "../core/math.js";
 import { drawLossChart, pushHistory } from "../core/chart.js";
+import { cssVar, onThemeChange } from "../core/theme.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 220, right: 680, top: 50, bottom: 510 };
@@ -186,7 +187,7 @@ export default {
       svg.appendChild(backgroundGrid(svg, 0, 0, 900, 560));
       svg.appendChild(svgEl("rect", {
         x: PLOT.left, y: PLOT.top, width: PLOT.right - PLOT.left, height: PLOT.bottom - PLOT.top,
-        fill: "none", stroke: "#2c4d70",
+        fill: "none", stroke: cssVar("--grid-line-strong", "#2c4d70"),
       }));
 
       // points
@@ -285,7 +286,8 @@ export default {
 
     renderButtons();
     renderAll();
+    const unsubTheme = onThemeChange(renderAll);
 
-    return { unmount() { stopPlay(); } };
+    return { unmount() { stopPlay(); unsubTheme(); } };
   },
 };

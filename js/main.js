@@ -1,4 +1,5 @@
 import { algorithms } from "./algorithms/index.js";
+import { initTheme, toggleTheme, currentTheme, onThemeChange } from "./core/theme.js";
 
 const select = document.getElementById("algo-select");
 const stageEl = document.getElementById("stage");
@@ -6,6 +7,7 @@ const panelEl = document.getElementById("panel");
 const controlsEl = document.getElementById("controls-cluster");
 const statusEl = document.getElementById("status-cluster");
 const panelToggle = document.getElementById("panel-toggle");
+const themeToggle = document.getElementById("theme-toggle");
 
 let current = null;
 
@@ -38,6 +40,17 @@ function initialAlgoId() {
   if (fromHash && algorithms.some((a) => a.id === fromHash)) return fromHash;
   return algorithms[0].id;
 }
+
+function syncThemeButton() {
+  const isLight = currentTheme() === "light";
+  themeToggle.textContent = isLight ? "☀️" : "🌙";
+  themeToggle.setAttribute("aria-label", `Switch to ${isLight ? "dark" : "light"} theme`);
+}
+
+initTheme();
+syncThemeButton();
+onThemeChange(syncThemeButton);
+themeToggle.addEventListener("click", toggleTheme);
 
 populateSelect();
 const initial = initialAlgoId();

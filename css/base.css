@@ -39,6 +39,22 @@
   --line: 1px solid var(--grid-line-strong);
 }
 
+/* Light theme — same tokens, re-pointed. Everything styled via a CSS class
+   (buttons, panels, node shells, axis lines, edge lines, text) picks this up
+   automatically. Raw-attribute SVG colors are re-read at draw time via
+   js/core/theme.js's cssVar(), so those stay in sync too. Signal colors
+   (amber/coral/teal + the cluster palette) are intentionally left constant
+   across themes — they're semantic (forward/backward/cluster identity), not
+   surface chrome. */
+:root[data-theme="light"] {
+  --ink-deep: #eef2f6;
+  --ink-panel: #ffffff;
+  --grid-line: #dde5ee;
+  --grid-line-strong: #b7c6d6;
+  --text-on-dark: #1b2430;
+  --text-on-dark-dim: #55677c;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -71,7 +87,7 @@ button, select, input {
 
 ::selection {
   background: var(--signal-forward);
-  color: var(--ink-deep);
+  color: #1b2430; /* fixed dark text — stays readable on amber in both themes */
 }
 
 /* --- app shell --- */

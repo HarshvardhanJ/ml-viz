@@ -12,18 +12,34 @@ straightforward fit for GitHub Pages.
 
 ## What's included
 
-| Algorithm | Status | What you can do |
-|---|---|---|
-| Neural Network (2-2-1) | ✅ built | Edit each neuron's weights, bias, and activation function. Step through the forward pass neuron-by-neuron, then step through backprop, then apply the gradient update. |
-| Linear / Logistic Regression | ✅ built | Drag data points, edit `w`/`b`/learning rate, and step through gradient descent one update at a time. Toggle between linear and logistic mode. |
-| K-Means Clustering | ✅ built | Edit point and centroid positions, choose k, and step through the assign / update phases until convergence. |
-| K-Nearest Neighbors | ✅ built | Click the plot to drop a query point, choose k, and step through revealing its nearest neighbors closest-first until the vote decides its class. |
-| Decision Tree | 🚧 scaffolded, not built | Registered in the dropdown with a "coming soon" screen — see `js/algorithms/decision-tree.js` via `stub.js`. |
-| Convolution (CNN) | 🚧 scaffolded, not built | Same as above, `js/algorithms/cnn.js`. |
+| Algorithm | What you can do |
+|---|---|
+| Neural Network (2-2-1) | Edit each neuron's weights, bias, and activation function. Step through the forward pass neuron-by-neuron, then step through backprop, then apply the gradient update. Watch the loss curve in the corner. |
+| Linear / Logistic Regression | Drag data points, edit `w`/`b`/learning rate, and step through gradient descent one update at a time. Toggle between linear and logistic mode. Loss curve included. |
+| K-Means Clustering | Edit point and centroid positions, choose k, and step through the assign / update phases until convergence. Inertia (WCSS) curve included. |
+| K-Nearest Neighbors | Click the plot to drop a query point, choose k, and step through revealing its nearest neighbors closest-first until the vote decides its class. |
+| Decision Tree | Step through recursive splits on an XOR-style dataset (no single split can separate it — a good demo of why recursion helps). Watch the tree diagram grow on the right while matching rectangular decision regions fill in on the scatter plot on the left. |
+| Convolution (CNN) | Edit a small pixel grid and a 3×3 kernel (with edge-detect / sharpen / blur presets), then step through sliding the kernel across the image, one position at a time, filling in the output feature map. |
 
-The three "coming soon" entries are intentionally left as stubs so the
-workshop's algorithm list doesn't need to change later — see
-[Adding a new algorithm](#adding-a-new-algorithm) to fill them in.
+All six are fully interactive — none are stubs. `js/algorithms/stub.js` is
+kept in the repo as a documented pattern for scaffolding a placeholder if you
+add a seventh algorithm later; see
+[Adding a new algorithm](#adding-a-new-algorithm).
+
+### Light / dark theme
+
+The 🌙 / ☀️ button in the header toggles between the dark blueprint theme and
+a light version of the same design, and remembers the choice (`localStorage`,
+falling back to the OS-level `prefers-color-scheme` on first visit). Surface
+colors (backgrounds, grid lines, borders, text) are CSS custom properties in
+`css/base.css` under `:root` and `:root[data-theme="light"]`, so anything
+styled via a CSS class re-themes for free. Algorithm modules that draw raw
+SVG colors directly (chart backgrounds, plot borders) read the current
+theme's resolved value through `cssVar()` in `js/core/theme.js` at render
+time, and re-render immediately on toggle via `onThemeChange()`. Semantic
+colors — amber for forward/positive, coral for backward/negative/error, the
+k-means/decision-tree class palette — are intentionally constant across both
+themes, since they encode meaning rather than surface chrome.
 
 ## Running it locally
 
@@ -60,18 +76,23 @@ ml-viz-lab/
 │   ├── base.css             # Design tokens, reset, responsive layout shell
 │   └── components.css       # Header, dropdown, panel, buttons, SVG node/edge styles
 ├── js/
-│   ├── main.js               # Populates the dropdown, mounts/unmounts algorithms
+│   ├── main.js               # Populates the dropdown, mounts/unmounts algorithms, theme toggle
 │   ├── core/
 │   │   ├── svg.js             # SVG element + "pulse traveling along a wire" helpers
 │   │   ├── math.js            # Activation functions + derivatives, formatting, RNG
 │   │   ├── controls.js        # Footer step/play/reset button bar builder
-│   │   └── panel.js           # Right-hand inspector panel builder (sliders, selects…)
+│   │   ├── panel.js           # Right-hand inspector panel builder (sliders, selects…)
+│   │   ├── chart.js           # Small corner sparkline for loss/inertia-over-steps
+│   │   └── theme.js           # Dark/light toggle, persistence, cssVar() reader
 │   └── algorithms/
 │       ├── index.js           # ⭐ The registry — add new algorithms here
 │       ├── neural-network.js
 │       ├── linear-regression.js
 │       ├── kmeans.js
-│       └── stub.js            # "Coming soon" placeholder factory
+│       ├── knn.js
+│       ├── decision-tree.js
+│       ├── cnn.js
+│       └── stub.js            # "Coming soon" placeholder factory, for future additions
 └── assets/
     └── favicon.svg
 ```
@@ -107,11 +128,18 @@ export default {
 };
 ```
 
-`js/core/svg.js`, `js/core/math.js`, `js/core/controls.js`, and
-`js/core/panel.js` exist so every algorithm module can reuse the same
-building blocks (a traveling "pulse" dot for showing values move along an
-edge, a slider/select/readout panel builder, a step/play/reset button bar)
-instead of re-implementing them.
+`js/core/svg.js`, `js/core/math.js`, `js/core/controls.js`, `js/core/panel.js`,
+`js/core/chart.js`, and `js/core/theme.js` exist so every algorithm module can
+reuse the same building blocks (a traveling "pulse" dot for showing values
+move along an edge, a slider/select/readout panel builder, a step/play/reset
+button bar, a corner loss-history sparkline, dark/light theming) instead of
+re-implementing them. If your module draws raw SVG colors for anything that
+should flip with the theme (a background panel, a border), read it through
+`cssVar("--token-name", "#fallback")` rather than hardcoding hex, and
+subscribe with `onThemeChange(renderAll)` in `mount()` (unsubscribing in
+`unmount()`) so a mid-session toggle redraws immediately. Semantic/data
+colors — like a cluster palette or the forward/backward amber-vs-coral
+convention — should usually stay constant across themes instead.
 
 ## Adding a new algorithm
 

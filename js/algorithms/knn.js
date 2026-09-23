@@ -2,6 +2,7 @@ import { svgEl, createStageSVG, backgroundGrid } from "../core/svg.js";
 import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { fmt, randRange, randn } from "../core/math.js";
+import { cssVar, onThemeChange } from "../core/theme.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 220, right: 680, top: 50, bottom: 510 };
@@ -183,7 +184,7 @@ export default {
       // clickable plot background — placing the query point
       const bg = svgEl("rect", {
         x: PLOT.left, y: PLOT.top, width: PLOT.right - PLOT.left, height: PLOT.bottom - PLOT.top,
-        fill: "transparent", stroke: "#2c4d70", style: "cursor:crosshair",
+        fill: "transparent", stroke: cssVar("--grid-line-strong", "#2c4d70"), style: "cursor:crosshair",
       });
       bg.addEventListener("click", (evt) => {
         try {
@@ -272,7 +273,8 @@ export default {
 
     renderButtons();
     renderAll();
+    const unsubTheme = onThemeChange(renderAll);
 
-    return { unmount() {} };
+    return { unmount() { unsubTheme(); } };
   },
 };

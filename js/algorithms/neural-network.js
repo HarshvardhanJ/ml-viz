@@ -3,6 +3,7 @@ import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addButton, addHint } from "../core/panel.js";
 import { activations, fmt, randRange } from "../core/math.js";
 import { drawLossChart, pushHistory } from "../core/chart.js";
+import { onThemeChange } from "../core/theme.js";
 
 const VIEWBOX = "0 0 900 560";
 const LAYOUT = {
@@ -448,10 +449,12 @@ export default {
 
     renderButtons();
     renderAll();
+    const unsubTheme = onThemeChange(renderAll);
 
     return {
       unmount() {
         stopPlay();
+        unsubTheme();
       },
     };
   },

@@ -7,6 +7,18 @@
 <meta name="description" content="Interactive, in-browser visualizations of how numbers travel through machine learning and deep learning algorithms." />
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<script>
+  // Set the theme attribute before the stylesheet paints, so there's no
+  // flash of the wrong theme. js/core/theme.js re-confirms this on module
+  // load and is the source of truth for every toggle after this point.
+  (function () {
+    try {
+      var saved = localStorage.getItem("mlvizlab-theme");
+      var preferLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (preferLight ? "light" : "dark"));
+    } catch (e) { /* localStorage unavailable — default dark theme applies */ }
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -29,6 +41,7 @@
       <select id="algo-select" aria-label="Select algorithm to visualize"></select>
     </div>
 
+    <button id="theme-toggle" aria-label="Switch to light theme" title="Toggle light / dark theme">🌙</button>
     <button id="panel-toggle" aria-expanded="false" aria-controls="panel">Inspector</button>
   </header>
 

@@ -1,4 +1,6 @@
 // Small helpers for building and animating SVG scenes without a framework.
+import { cssVar } from "./theme.js";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export function svgEl(tag, attrs = {}, children = []) {
@@ -32,7 +34,7 @@ export function createStageSVG(container, viewBox = "0 0 900 560") {
     svgEl("path", {
       d: "M 24 0 L 0 0 0 24",
       fill: "none",
-      stroke: "#1e3450",
+      stroke: cssVar("--grid-line", "#1e3450"),
       "stroke-width": 1,
     })
   );
