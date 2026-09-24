@@ -3,6 +3,7 @@ import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { activations, fmt, randRange } from "../core/math.js";
 import { cssVar, onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const IN_N = 6, K_N = 3, OUT_N = IN_N - K_N + 1;
@@ -68,7 +69,21 @@ export default {
     function inputCoord(r, c) { return { x: INPUT_ORIGIN.x + c * CELL + CELL / 2, y: INPUT_ORIGIN.y + r * CELL + CELL / 2 }; }
     function outputCoord(r, c) { return { x: OUTPUT_ORIGIN.x + c * OCELL + OCELL / 2, y: OUTPUT_ORIGIN.y + r * OCELL + OCELL / 2 }; }
 
-    async function doStep() {
+    function previewStepQuestion() {
+      if (state.nextIndex >= total) return null;
+      const row = Math.floor(state.nextIndex / OUT_N), col = state.nextIndex % OUT_N;
+      let z = 0;
+      for (let kr = 0; kr < K_N; kr++) {
+        for (let kc = 0; kc < K_N; kc++) z += state.input[row + kr][col + kc] * state.kernel[kr][kc];
+      }
+      return {
+        question: "Before the activation is applied, will this output cell's value be positive or negative?",
+        options: ["Positive", "Negative"],
+        correctIndex: z >= 0 ? 0 : 1,
+      };
+    }
+
+    async function doStepReal() {
       if (state.busy || state.nextIndex >= total) return;
       state.busy = true;
       updateButtonStates();
@@ -96,6 +111,8 @@ export default {
       renderAll();
     }
 
+    const doStep = withPrediction(stageEl, previewStepQuestion, doStepReal);
+
     function doRegenerateInput() {
       stopPlay();
       const kernel = state.kernel, preset = state.preset, activation = state.activation;
@@ -116,10 +133,11 @@ export default {
 
     function togglePlay() {
       if (playTimer) { stopPlay(); return; }
+      // Play always runs the real step directly, bypassing Predict Mode.
       playTimer = setInterval(() => {
         if (state.busy) return;
         if (state.nextIndex >= total) { stopPlay(); return; }
-        doStep();
+        doStepReal();
       }, 700);
       ctl.setLabel("play", "Pause");
     }

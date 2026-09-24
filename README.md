@@ -26,6 +26,37 @@ kept in the repo as a documented pattern for scaffolding a placeholder if you
 add a seventh algorithm later; see
 [Adding a new algorithm](#adding-a-new-algorithm).
 
+### Predict Mode
+
+The 🔮 **Predict Mode** button in the header (off by default — click it once
+before the workshop, or let students discover it) turns every "Step" button
+into a quick multiple-choice quiz: clicking Step shows a short question about
+what's about to happen — "will this neuron's output be closer to 0 or 1?",
+"will the loss go up or down?", "which class does this neighbor belong to?",
+"will this region split again or become a leaf?" — and only runs the actual
+step once the student picks an answer, with an instant correct/incorrect
+flash. It turns passive stepping into active guessing, which is a much
+stronger way to build intuition than just watching a number appear.
+
+This is implemented so it can never get out of sync with the real
+computation: each module has a small pure `previewXQuestion()` function that
+computes the exact same result its real step function would, one step early,
+without touching any state. `js/core/predict.js`'s `withPrediction()` wraps
+the real step function so that, when Predict Mode is on and a preview is
+available, it shows the question and only calls the *original, unmodified*
+step function after the student answers. With Predict Mode off, the wrapper
+is a no-op and behavior is identical to before Predict Mode existed. **Play**
+buttons always call the real step functions directly (not the wrapped
+versions) — an unattended interval loop and a blocking question don't mix.
+
+Adding a preview to a new algorithm module is optional: write a pure
+`previewXQuestion()` that reads `state` and returns
+`{ question, options, correctIndex }` (or `null` when there's nothing
+meaningful to predict right now), then wrap your step function with
+`withPrediction(stageEl, previewXQuestion, yourRealStepFn)` and use the
+wrapped version as the button's `onClick`. Without a preview function, the
+module just behaves as if Predict Mode doesn't exist.
+
 ### Light / dark theme
 
 The 🌙 / ☀️ button in the header toggles between the dark blueprint theme and
@@ -83,7 +114,8 @@ ml-viz-lab/
 │   │   ├── controls.js        # Footer step/play/reset button bar builder
 │   │   ├── panel.js           # Right-hand inspector panel builder (sliders, selects…)
 │   │   ├── chart.js           # Small corner sparkline for loss/inertia-over-steps
-│   │   └── theme.js           # Dark/light toggle, persistence, cssVar() reader
+│   │   ├── theme.js           # Dark/light toggle, persistence, cssVar() reader
+│   │   └── predict.js         # "Predict Before You Step" toggle + question overlay
 │   └── algorithms/
 │       ├── index.js           # ⭐ The registry — add new algorithms here
 │       ├── neural-network.js

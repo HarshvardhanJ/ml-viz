@@ -4,6 +4,7 @@ import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, a
 import { activations, fmt, randRange } from "../core/math.js";
 import { drawLossChart, pushHistory } from "../core/chart.js";
 import { onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const LAYOUT = {
@@ -166,9 +167,56 @@ export default {
       return LAYOUT.loss;
     }
 
+    // ---------- predict-before-you-step previews (pure, no side effects) ----------
+
+    function previewForwardQuestion() {
+      let next;
+      if (state.phase === "idle") next = { type: "hidden", idx: 0 };
+      else if (state.phase === "forward" && state.forwardQueue.length > 0) next = state.forwardQueue[0];
+      else return null;
+
+      const neuron = next.type === "hidden" ? state.hidden[next.idx] : state.output;
+      const inputsToNode = next.type === "hidden" ? state.inputs : state.hidden.map((h) => h.a ?? 0);
+      const z = neuron.weights.reduce((sum, w, i) => sum + w * inputsToNode[i], neuron.bias);
+      const a = activations[neuron.activation].fn(z);
+      const label = next.type === "hidden" ? `hidden neuron h${next.idx}` : "the output neuron";
+
+      if (neuron.activation === "sigmoid") {
+        return { question: `Sigmoid squashes everything into (0, 1). Will ${label}'s output be closer to 0 or closer to 1?`, options: ["Closer to 0", "Closer to 1"], correctIndex: a < 0.5 ? 0 : 1 };
+      }
+      if (neuron.activation === "relu") {
+        return { question: `ReLU clips negative inputs to 0. Will ${label}'s output be exactly 0, or positive?`, options: ["Exactly 0", "Positive"], correctIndex: a <= 0 ? 0 : 1 };
+      }
+      return { question: `Will ${label}'s output be positive or negative?`, options: ["Positive", "Negative"], correctIndex: a >= 0 ? 0 : 1 };
+    }
+
+    function previewBackwardQuestion() {
+      let next;
+      if (state.phase === "forward-done") next = { type: "output", idx: 0 };
+      else if (state.phase === "backward" && state.backwardQueue.length > 0) next = state.backwardQueue[0];
+      else return null;
+
+      let delta, label;
+      if (next.type === "output") {
+        const neuron = state.output;
+        delta = (neuron.a - state.target) * activations[neuron.activation].dfn(neuron.z);
+        label = "the output neuron";
+      } else {
+        const neuron = state.hidden[next.idx];
+        const out = state.output;
+        delta = out.delta * out.weights[next.idx] * activations[neuron.activation].dfn(neuron.z);
+        label = `hidden neuron h${next.idx}`;
+      }
+      return {
+        question: `Gradient descent moves weights opposite to their gradient. Will ${label}'s error signal (delta) be positive or negative?`,
+        options: ["Positive", "Negative"],
+        correctIndex: delta >= 0 ? 0 : 1,
+      };
+    }
+
     // ---------- actions (buttons) ----------
 
-    async function stepForward() {
+    async function stepForwardReal() {
       if (state.busy) return;
       if (state.phase === "idle") {
         state.forwardQueue = [{ type: "hidden", idx: 0 }, { type: "hidden", idx: 1 }, { type: "output", idx: 0 }];
@@ -184,7 +232,7 @@ export default {
       renderAll();
     }
 
-    async function stepBackward() {
+    async function stepBackwardReal() {
       if (state.busy) return;
       if (state.phase === "forward-done") {
         state.backwardQueue = [{ type: "output", idx: 0 }, { type: "hidden", idx: 1 }, { type: "hidden", idx: 0 }];
@@ -199,6 +247,9 @@ export default {
       state.busy = false;
       renderAll();
     }
+
+    const stepForward = withPrediction(stageEl, previewForwardQuestion, stepForwardReal);
+    const stepBackward = withPrediction(stageEl, previewBackwardQuestion, stepBackwardReal);
 
     function doApply() {
       if (state.phase !== "backward-done" || state.busy) return;
@@ -216,10 +267,14 @@ export default {
 
     function togglePlay() {
       if (playTimer) { stopPlay(); return; }
+      // Play always runs the real step logic directly, bypassing Predict Mode —
+      // an automatic, hands-off demo and a "stop and guess" quiz don't mix, and
+      // gating an interval-driven loop on an unanswered question would just
+      // stack up overlays.
       playTimer = setInterval(async () => {
         if (state.busy) return;
-        if (state.phase === "idle" || state.phase === "forward") await stepForward();
-        else if (state.phase === "forward-done" || state.phase === "backward") await stepBackward();
+        if (state.phase === "idle" || state.phase === "forward") await stepForwardReal();
+        else if (state.phase === "forward-done" || state.phase === "backward") await stepBackwardReal();
         else if (state.phase === "backward-done") doApply();
       }, 750);
       ctl.setLabel("play", "Pause");

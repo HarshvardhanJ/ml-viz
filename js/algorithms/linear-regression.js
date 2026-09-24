@@ -4,6 +4,7 @@ import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, a
 import { fmt, randRange, randn, clamp } from "../core/math.js";
 import { drawLossChart, pushHistory } from "../core/chart.js";
 import { cssVar, onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 90, right: 830, top: 60, bottom: 470 };
@@ -88,7 +89,27 @@ export default {
       return { dw: dw / n, db: db / n, loss: loss / n };
     }
 
-    async function doStep() {
+    function previewStepQuestion() {
+      const { dw, db, loss } = computeGradients();
+      const newW = state.w - state.lr * dw, newB = state.b - state.lr * db;
+      let newLoss = 0;
+      for (const p of state.points) {
+        const z = newW * p.x + newB;
+        const pred = state.mode === "linear" ? z : sigmoid(z);
+        const err = pred - p.y;
+        newLoss += state.mode === "linear"
+          ? 0.5 * err * err
+          : -(p.y * Math.log(clamp(pred, 1e-6, 1 - 1e-6)) + (1 - p.y) * Math.log(clamp(1 - pred, 1e-6, 1 - 1e-6)));
+      }
+      newLoss /= state.points.length;
+      return {
+        question: "After this gradient descent step, will the loss go up or down?",
+        options: ["Loss goes down", "Loss goes up"],
+        correctIndex: newLoss <= loss ? 0 : 1,
+      };
+    }
+
+    async function doStepReal() {
       if (state.busy) return;
       state.busy = true;
       updateButtonStates();
@@ -104,6 +125,8 @@ export default {
       renderAll();
     }
 
+    const doStep = withPrediction(stageEl, previewStepQuestion, doStepReal);
+
     function doRegenerate(mode) {
       stopPlay();
       state = freshState(mode);
@@ -114,7 +137,9 @@ export default {
 
     function togglePlay() {
       if (playTimer) { stopPlay(); return; }
-      playTimer = setInterval(() => { if (!state.busy) doStep(); }, 900);
+      // Play always runs the real step directly — an unanswered predict
+      // prompt would otherwise stall (or stack up under) the interval.
+      playTimer = setInterval(() => { if (!state.busy) doStepReal(); }, 900);
       ctl.setLabel("play", "Pause");
     }
     function stopPlay() {

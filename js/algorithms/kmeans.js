@@ -4,6 +4,7 @@ import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, a
 import { fmt, randRange, randn } from "../core/math.js";
 import { drawLossChart, pushHistory } from "../core/chart.js";
 import { cssVar, onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 220, right: 680, top: 50, bottom: 510 };
@@ -87,7 +88,26 @@ export default {
       });
     }
 
-    async function doStep() {
+    function previewStepQuestion() {
+      if (state.phase === "assign") {
+        const anyChange = state.points.some((p) => nearestCentroidIdx(p) !== p.cluster);
+        return {
+          question: "If we assign every point to its nearest centroid right now, will any point switch clusters?",
+          options: ["Yes, at least one will switch", "No, they'll all stay put"],
+          correctIndex: anyChange ? 0 : 1,
+        };
+      }
+      const fresh = computeNewCentroids();
+      const maxShift = Math.max(...state.centroids.map((c, i) => Math.hypot(c.x - fresh[i].x, c.y - fresh[i].y)));
+      const settled = maxShift < 0.15;
+      return {
+        question: "Will the centroids move a noticeable amount, or have they basically settled?",
+        options: ["They'll move noticeably", "They've basically settled"],
+        correctIndex: settled ? 1 : 0,
+      };
+    }
+
+    async function doStepReal() {
       if (state.busy || state.converged) return;
       state.busy = true;
       updateButtonStates();
@@ -114,6 +134,8 @@ export default {
       updateButtonStates();
     }
 
+    const doStep = withPrediction(stageEl, previewStepQuestion, doStepReal);
+
     function doRegenerateData() {
       stopPlay();
       state = freshState(state.k);
@@ -132,7 +154,8 @@ export default {
 
     function togglePlay() {
       if (playTimer) { stopPlay(); return; }
-      playTimer = setInterval(() => { if (!state.busy && !state.converged) doStep(); else if (state.converged) stopPlay(); }, 800);
+      // Play always runs the real step directly, bypassing Predict Mode.
+      playTimer = setInterval(() => { if (!state.busy && !state.converged) doStepReal(); else if (state.converged) stopPlay(); }, 800);
       ctl.setLabel("play", "Pause");
     }
     function stopPlay() {

@@ -1,5 +1,6 @@
 import { algorithms } from "./algorithms/index.js";
 import { initTheme, toggleTheme, currentTheme, onThemeChange } from "./core/theme.js";
+import { isPredictModeOn, togglePredictMode, onPredictModeChange } from "./core/predict.js";
 
 const select = document.getElementById("algo-select");
 const stageEl = document.getElementById("stage");
@@ -8,6 +9,7 @@ const controlsEl = document.getElementById("controls-cluster");
 const statusEl = document.getElementById("status-cluster");
 const panelToggle = document.getElementById("panel-toggle");
 const themeToggle = document.getElementById("theme-toggle");
+const predictToggle = document.getElementById("predict-toggle");
 
 let current = null;
 
@@ -47,10 +49,20 @@ function syncThemeButton() {
   themeToggle.setAttribute("aria-label", `Switch to ${isLight ? "dark" : "light"} theme`);
 }
 
+function syncPredictButton() {
+  const on = isPredictModeOn();
+  predictToggle.setAttribute("aria-pressed", String(on));
+  predictToggle.querySelector(".label-full").textContent = `Predict Mode: ${on ? "On" : "Off"}`;
+}
+
 initTheme();
 syncThemeButton();
 onThemeChange(syncThemeButton);
 themeToggle.addEventListener("click", toggleTheme);
+
+syncPredictButton();
+onPredictModeChange(syncPredictButton);
+predictToggle.addEventListener("click", togglePredictMode);
 
 populateSelect();
 const initial = initialAlgoId();

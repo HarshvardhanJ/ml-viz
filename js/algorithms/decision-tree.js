@@ -3,6 +3,7 @@ import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { fmt, randRange, randn } from "../core/math.js";
 import { cssVar, onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const SCATTER = { left: 40, right: 420, top: 60, bottom: 500 };
@@ -118,7 +119,21 @@ export default {
       state = freshState(state.maxDepth, state.minSamples, state.points);
     }
 
-    function doStep() {
+    function previewStepQuestion() {
+      if (state.queue.length === 0) return null;
+      const node = state.nodes[state.queue[0]];
+      const tooDeep = node.depth >= state.maxDepth;
+      const tooFew = node.indices.length < state.minSamples;
+      const pure = node.gini === 0;
+      const split = (!tooDeep && !tooFew && !pure) ? findBestSplit(node.indices, state.points, 1) : null;
+      return {
+        question: "Will the highlighted region split again, or become a leaf?",
+        options: ["It will split again", "It becomes a leaf"],
+        correctIndex: split ? 0 : 1,
+      };
+    }
+
+    function doStepReal() {
       if (state.busy || state.queue.length === 0) return;
       const id = state.queue.shift();
       const node = state.nodes[id];
@@ -148,6 +163,8 @@ export default {
       renderAll();
     }
 
+    const doStep = withPrediction(stageEl, previewStepQuestion, doStepReal);
+
     function doRegenerateData() {
       stopPlay();
       state = freshState(state.maxDepth, state.minSamples);
@@ -158,9 +175,10 @@ export default {
 
     function togglePlay() {
       if (playTimer) { stopPlay(); return; }
+      // Play always runs the real step directly, bypassing Predict Mode.
       playTimer = setInterval(() => {
         if (state.queue.length === 0) { stopPlay(); return; }
-        doStep();
+        doStepReal();
       }, 750);
       ctl.setLabel("play", "Pause");
     }

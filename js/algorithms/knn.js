@@ -3,6 +3,7 @@ import { renderControls, renderStatus } from "../core/controls.js";
 import { resetPanel, beginPanel, addSection, addSlider, addSelect, addReadout, addHint } from "../core/panel.js";
 import { fmt, randRange, randn } from "../core/math.js";
 import { cssVar, onThemeChange } from "../core/theme.js";
+import { withPrediction } from "../core/predict.js";
 
 const VIEWBOX = "0 0 900 560";
 const PLOT = { left: 220, right: 680, top: 50, bottom: 510 };
@@ -60,7 +61,18 @@ export default {
       state.prediction = null;
     }
 
-    function doStep() {
+    function previewStepQuestion() {
+      if (state.revealed >= state.k) return null;
+      const order = state.order || state.points.map((p, i) => ({ i, d: dist(p, state.query) })).sort((a, b) => a.d - b.d);
+      const nextLabel = state.points[order[state.revealed].i].label;
+      return {
+        question: "Which class do you think the next-nearest neighbor belongs to?",
+        options: CLASS_NAMES.slice(),
+        correctIndex: nextLabel,
+      };
+    }
+
+    function doStepReal() {
       if (state.busy) return;
       if (state.order === null) {
         state.order = state.points
@@ -83,6 +95,8 @@ export default {
       }
       renderAll();
     }
+
+    const doStep = withPrediction(stageEl, previewStepQuestion, doStepReal);
 
     function placeQuery(px, py) {
       state.query = { x: invX(px), y: invY(py) };
